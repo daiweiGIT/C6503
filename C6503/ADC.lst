@@ -1,0 +1,390 @@
+Interrupt Vectors
+    00000 C00A      RJMP	__start|__text_start
+    00009 C03A      RJMP	_adc_isr
+
+Program Code (text area)
+__start|__text_start:
+    0000B E9CF      LDI	R28,0x9F
+    0000C E0D0      LDI	R29,0
+    0000D BFCD      OUT	0x3D,R28
+    0000E BFDE      OUT	0x3E,R29
+    0000F 51CE      SUBI	R28,0x1E
+    00010 40D0      SBCI	R29,0
+    00011 EA0A      LDI	R16,0xAA
+    00012 8308      ST	Y,R16
+    00013 2400      CLR	R0
+    00014 E6E2      LDI	R30,0x62
+    00015 E0F0      LDI	R31,0
+    00016 E010      LDI	R17,0
+    00017 36E2      CPI	R30,0x62
+    00018 07F1      CPC	R31,R17
+    00019 F011      BEQ	0x001C
+    0001A 9201      ST	Z+,R0
+    0001B CFFB      RJMP	0x0017
+    0001C 8300      ST	Z,R16
+    0001D E1E4      LDI	R30,0x14
+    0001E E0F0      LDI	R31,0
+    0001F E6A0      LDI	R26,0x60
+    00020 E0B0      LDI	R27,0
+    00021 E010      LDI	R17,0
+    00022 E000      LDI	R16,0
+    00023 BF0B      OUT	0x3B,R16
+    00024 31E6      CPI	R30,0x16
+    00025 07F1      CPC	R31,R17
+    00026 F021      BEQ	0x002B
+    00027 95C8      LPM
+    00028 9631      ADIW	R30,1
+    00029 920D      ST	X+,R0
+    0002A CFF9      RJMP	0x0024
+    0002B D03A      RCALL	_main
+_exit:
+    0002C CFFF      RJMP	_exit
+FILE: C:\Users\Administrator\Desktop\AVR\C6503灯板单片机源码无PWM波控制\ADC.c
+(0001) #include <iot13v.h>
+(0002) #include <macros.h>
+(0003) #define uchar  unsigned char 
+(0004) #define uint  unsigned int 
+(0005) #define Min 20 ///光起控最小值
+(0006) #define Max 45 ///光起控最大值
+(0007) static uint volatile LASTADCVAL = 0;
+(0008) 
+(0009) #define ADCEN  1
+(0010) /*微秒级延时程序*/
+(0011) void delay_us(uint time)
+(0012) {     
+(0013)   	 do
+(0014) 	 {
+(0015) 		time--;
+_delay_us:
+  time                 --> R16
+    0002D 5001      SUBI	R16,1
+    0002E 4010      SBCI	R17,0
+(0016) 	 }	
+(0017)   	 while (time>1);
+    0002F E081      LDI	R24,1
+    00030 E090      LDI	R25,0
+    00031 1780      CP	R24,R16
+    00032 0791      CPC	R25,R17
+    00033 F3C8      BCS	0x002D
+    00034 9508      RET
+(0018) }	  
+(0019) 
+(0020) 
+(0021) //IO口初始化
+(0022) void port_init(void)
+(0023) {
+(0024) 	PORTB = 0x07;
+_port_init:
+    00035 E087      LDI	R24,7
+    00036 BB88      OUT	0x18,R24
+(0025)  	DDRB = (1<<PB0)|(1<<PB1)|(1<<PB2)|(1<<PB3)|(0<<PB4);	//I/O状态
+    00037 E08F      LDI	R24,0xF
+    00038 BB87      OUT	0x17,R24
+    00039 9508      RET
+(0026) 
+(0027) 
+(0028) }
+(0029) 
+(0030) //ADC转始化设置
+(0031) void adc_init(void)
+(0032) {
+(0033)      ADCSRA = 0x00;  //disable adc
+_adc_init:
+    0003A 2422      CLR	R2
+    0003B B826      OUT	0x06,R2
+(0034)      ADCMUX = 0x42;  //使用VCC作为参考电压，选择ADC3（PB3）输入通道
+    0003C E482      LDI	R24,0x42
+    0003D B987      OUT	0x07,R24
+(0035)      ACSR  = 0x80;   //禁用模拟比较器，降低功耗
+    0003E E880      LDI	R24,0x80
+    0003F B988      OUT	0x08,R24
+(0036)      ADCSRB = 0x00;  //ADC连续转换模式
+    00040 B823      OUT	0x03,R2
+(0037)      ADCSRA = 0xEA;  //使能ADC开始转换，自动触发使能,使能转换结束中断,4分频
+    00041 EE8A      LDI	R24,0xEA
+    00042 B986      OUT	0x06,R24
+    00043 9508      RET
+_adc_isr:
+  value                --> R16
+    00044 922A      ST	-Y,R2
+    00045 923A      ST	-Y,R3
+    00046 930A      ST	-Y,R16
+    00047 931A      ST	-Y,R17
+    00048 B62F      IN	R2,0x3F
+    00049 922A      ST	-Y,R2
+(0038) }
+(0039) 
+(0040) //ADC转换结束中断
+(0041) #pragma interrupt_handler adc_isr:10
+(0042) void adc_isr(void)
+(0043) {
+(0044) 
+(0045)      uint value;
+(0046)      value=ADCL;          
+    0004A B104      IN	R16,0x04
+    0004B 2711      CLR	R17
+(0047)      value|=(uint)ADCH << 8; 
+    0004C B025      IN	R2,0x05
+    0004D 2433      CLR	R3
+    0004E 2C32      MOV	R3,R2
+    0004F 2422      CLR	R2
+    00050 2902      OR	R16,R2
+    00051 2913      OR	R17,R3
+(0048) 	 LASTADCVAL=value;
+    00052 9310 0061 STS	ADC.c:LASTADCVAL+1,R17
+    00054 9300 0060 STS	ADC.c:LASTADCVAL,R16
+    00056 9029      LD	R2,Y+
+    00057 BE2F      OUT	0x3F,R2
+    00058 9119      LD	R17,Y+
+    00059 9109      LD	R16,Y+
+    0005A 9039      LD	R3,Y+
+    0005B 9029      LD	R2,Y+
+    0005C 9518      RETI
+(0049) }
+(0050) 
+(0051) //call this routine to initialize all peripherals
+(0052) void init_devices(void)
+(0053) {
+(0054)     //stop errant interrupts until set up
+(0055)     CLI(); //disable all interrupts
+_init_devices:
+    0005D 94F8      BCLR	7
+(0056)     port_init();
+    0005E DFD6      RCALL	_port_init
+(0057)     adc_init();
+    0005F DFDA      RCALL	_adc_init
+(0058)     MCUCR = 0x00;
+    00060 2422      CLR	R2
+    00061 BE25      OUT	0x35,R2
+(0059)     TIMSK0 = 0x00; //timer interrupt sources
+    00062 BE29      OUT	0x39,R2
+(0060)     GIMSK = 0x00; //interrupt sources
+    00063 BE2B      OUT	0x3B,R2
+(0061)     SEI(); //re-enable interrupts
+    00064 9478      BSET	7
+    00065 9508      RET
+_main:
+  cnt                  --> Y,+1
+  avgADC               --> R10
+  ADCsum               --> Y,+0
+  tmpADC               --> R12
+  i                    --> R10
+    00066 9724      SBIW	R28,4
+(0062)     //all peripherals are now initialized
+(0063) }
+(0064) 
+(0065) 
+(0066) void main(void)
+(0067) {
+(0068)  	 uchar i,cnt;
+(0069)  	uint tmpADC,avgADC; 
+(0070) 	unsigned long ADCsum;
+(0071) 	
+(0072)     init_devices();
+    00067 DFF5      RCALL	_init_devices
+(0073) 	delay_us(200);
+    00068 EC08      LDI	R16,0xC8
+    00069 E010      LDI	R17,0
+    0006A DFC2      RCALL	_delay_us
+    0006B C03B      RJMP	0x00A7
+(0074) 
+(0075)     
+(0076)     while(1)
+(0077)     {
+(0078) 		   ADCsum = 0;
+    0006C E080      LDI	R24,0
+    0006D 8388      ST	Y,R24
+    0006E 8389      STD	Y+1,R24
+    0006F 838A      STD	Y+2,R24
+    00070 838B      STD	Y+3,R24
+(0079) 	 	   for(i = 0; i < 200; i++)
+    00071 24AA      CLR	R10
+    00072 C017      RJMP	0x008A
+(0080) 		   {
+(0081) 	 	    tmpADC = LASTADCVAL;
+    00073 90C0 0060 LDS	R12,ADC.c:LASTADCVAL
+    00075 90D0 0061 LDS	R13,ADC.c:LASTADCVAL+1
+(0082) 		     ADCsum += tmpADC;
+    00077 0116      MOVW	R2,R12
+    00078 2444      CLR	R4
+    00079 2455      CLR	R5
+    0007A 8068      LD	R6,Y
+    0007B 8079      LDD	R7,Y+1
+    0007C 808A      LDD	R8,Y+2
+    0007D 809B      LDD	R9,Y+3
+    0007E 0C62      ADD	R6,R2
+    0007F 1C73      ADC	R7,R3
+    00080 1C84      ADC	R8,R4
+    00081 1C95      ADC	R9,R5
+    00082 8268      ST	Y,R6
+    00083 8279      STD	Y+1,R7
+    00084 828A      STD	Y+2,R8
+    00085 829B      STD	Y+3,R9
+(0083) 			 delay_us(100);//6ms
+    00086 E604      LDI	R16,0x64
+    00087 E010      LDI	R17,0
+    00088 DFA4      RCALL	_delay_us
+    00089 94A3      INC	R10
+    0008A 2D8A      MOV	R24,R10
+    0008B 3C88      CPI	R24,0xC8
+    0008C F330      BCS	0x0073
+(0084) 		  	}		
+(0085) 			avgADC = (uint)(ADCsum/200);
+    0008D EC48      LDI	R20,0xC8
+    0008E E050      LDI	R21,0
+    0008F E060      LDI	R22,0
+    00090 E070      LDI	R23,0
+    00091 8108      LD	R16,Y
+    00092 8119      LDD	R17,Y+1
+    00093 812A      LDD	R18,Y+2
+    00094 813B      LDD	R19,Y+3
+    00095 937A      ST	-Y,R23
+    00096 936A      ST	-Y,R22
+    00097 935A      ST	-Y,R21
+    00098 934A      ST	-Y,R20
+    00099 D010      RCALL	div32u
+    0009A 0158      MOVW	R10,R16
+(0086) 			if(avgADC > Max)
+    0009B E28D      LDI	R24,0x2D
+    0009C E090      LDI	R25,0
+    0009D 1780      CP	R24,R16
+    0009E 0791      CPC	R25,R17
+    0009F F408      BCC	0x00A1
+(0087) 				PORTB &=~ (1<<3); 
+    000A0 98C3      CBI	0x18,3
+(0088) 
+(0089) 			if(avgADC < Min)
+    000A1 01C5      MOVW	R24,R10
+    000A2 3184      CPI	R24,0x14
+    000A3 E0E0      LDI	R30,0
+    000A4 079E      CPC	R25,R30
+    000A5 F408      BCC	0x00A7
+(0090) 			    PORTB |= (1<<3); 
+FILE: <library>
+    000A6 9AC3      SBI	0x18,3
+    000A7 CFC4      RJMP	0x006C
+    000A8 9624      ADIW	R28,4
+    000A9 9508      RET
+div32u:
+    000AA 94E8      BCLR	6
+    000AB C001      RJMP	0x00AD
+mod32u:
+    000AC 9468      BSET	6
+    000AD D02F      RCALL	long_div_prolog
+    000AE 24CC      CLR	R12
+    000AF C008      RJMP	0x00B8
+div32s:
+    000B0 94E8      BCLR	6
+    000B1 C001      RJMP	0x00B3
+mod32s:
+    000B2 9468      BSET	6
+    000B3 D029      RCALL	long_div_prolog
+    000B4 FD37      SBRC	R19,7
+    000B5 D05C      RCALL	neg32
+    000B6 FDB7      SBRC	R27,7
+    000B7 D051      RCALL	neg_R24_R27
+    000B8 2477      CLR	R7
+    000B9 2488      CLR	R8
+    000BA 2499      CLR	R9
+    000BB 24AA      CLR	R10
+    000BC 24BB      CLR	R11
+    000BD D041      RCALL	tst_R16_R19
+    000BE F0C1      BEQ	0x00D7
+    000BF D044      RCALL	tst_R24_R27
+    000C0 F0B1      BEQ	0x00D7
+    000C1 E2E8      LDI	R30,0x28
+    000C2 0F00      LSL	R16
+    000C3 1F11      ROL	R17
+    000C4 1F22      ROL	R18
+    000C5 1F33      ROL	R19
+    000C6 1C77      ROL	R7
+    000C7 1C88      ROL	R8
+    000C8 1C99      ROL	R9
+    000C9 1CAA      ROL	R10
+    000CA 1CBB      ROL	R11
+    000CB 1688      CP	R8,R24
+    000CC 0699      CPC	R9,R25
+    000CD 06AA      CPC	R10,R26
+    000CE 06BB      CPC	R11,R27
+    000CF F028      BCS	0x00D5
+    000D0 1A88      SUB	R8,R24
+    000D1 0A99      SBC	R9,R25
+    000D2 0AAA      SBC	R10,R26
+    000D3 0ABB      SBC	R11,R27
+    000D4 9503      INC	R16
+    000D5 95EA      DEC	R30
+    000D6 F759      BNE	0x00C2
+    000D7 F426      BRTC	0x00DC
+    000D8 2D08      MOV	R16,R8
+    000D9 2D19      MOV	R17,R9
+    000DA 2D2A      MOV	R18,R10
+    000DB 2D3B      MOV	R19,R11
+    000DC C013      RJMP	long_div_epilog
+long_div_prolog:
+    000DD 927A      ST	-Y,R7
+    000DE 928A      ST	-Y,R8
+    000DF 929A      ST	-Y,R9
+    000E0 92AA      ST	-Y,R10
+    000E1 92BA      ST	-Y,R11
+    000E2 92CA      ST	-Y,R12
+    000E3 93EA      ST	-Y,R30
+    000E4 938A      ST	-Y,R24
+    000E5 939A      ST	-Y,R25
+    000E6 93AA      ST	-Y,R26
+    000E7 93BA      ST	-Y,R27
+    000E8 858B      LDD	R24,Y+11
+    000E9 859C      LDD	R25,Y+12
+    000EA 85AD      LDD	R26,Y+13
+    000EB 85BE      LDD	R27,Y+14
+    000EC 2EC3      MOV	R12,R19
+    000ED F00E      BRTS	0x00EF
+    000EE 26CB      EOR	R12,R27
+    000EF 9508      RET
+long_div_epilog:
+    000F0 FCC7      SBRC	R12,7
+    000F1 D020      RCALL	neg32
+    000F2 91B9      LD	R27,Y+
+    000F3 91A9      LD	R26,Y+
+    000F4 9199      LD	R25,Y+
+    000F5 9189      LD	R24,Y+
+    000F6 91E9      LD	R30,Y+
+    000F7 90C9      LD	R12,Y+
+    000F8 90B9      LD	R11,Y+
+    000F9 90A9      LD	R10,Y+
+    000FA 9099      LD	R9,Y+
+    000FB 9089      LD	R8,Y+
+    000FC 9079      LD	R7,Y+
+    000FD 9624      ADIW	R28,4
+    000FE 9508      RET
+tst_R16_R19:
+    000FF 2FE0      MOV	R30,R16
+    00100 2BE1      OR	R30,R17
+    00101 2BE2      OR	R30,R18
+    00102 2BE3      OR	R30,R19
+    00103 9508      RET
+tst_R24_R27:
+    00104 2FE8      MOV	R30,R24
+    00105 2BE9      OR	R30,R25
+    00106 2BEA      OR	R30,R26
+    00107 2BEB      OR	R30,R27
+    00108 9508      RET
+neg_R24_R27:
+    00109 9580      COM	R24
+    0010A 9590      COM	R25
+    0010B 95A0      COM	R26
+    0010C 95B0      COM	R27
+    0010D 5F8F      SUBI	R24,0xFF
+    0010E 4F9F      SBCI	R25,0xFF
+    0010F 4FAF      SBCI	R26,0xFF
+    00110 4FBF      SBCI	R27,0xFF
+    00111 9508      RET
+neg32:
+    00112 9500      COM	R16
+    00113 9510      COM	R17
+    00114 9520      COM	R18
+    00115 9530      COM	R19
+    00116 5F0F      SUBI	R16,0xFF
+    00117 4F1F      SBCI	R17,0xFF
+    00118 4F2F      SBCI	R18,0xFF
+    00119 4F3F      SBCI	R19,0xFF
+    0011A 9508      RET

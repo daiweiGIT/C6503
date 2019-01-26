@@ -1,0 +1,198 @@
+#include <iot13v.h>
+#include <macros.h>
+#define uchar  unsigned char 
+#define uint  unsigned int 
+#define Min 10
+#define Max 20
+
+static uint LASTADCVAL = 0;
+static uchar  mark=0;
+static uchar LEDStatus = 0;
+#define Debug     0 ///调试串口
+#define Timer0  1//
+#define ADCEN  1
+/*微秒级延时程序*/
+void delay_us(int time)
+{     
+  	 do
+	 {
+		time--;
+	 }	
+  	 while (time>1);
+}	  
+
+#if Debug  
+
+
+void Delay800(void)
+{
+ 	 delay_us(3);
+}
+
+
+void WByte(uchar input)
+{
+
+     uchar n=8;
+	 uchar tmp;
+     PORTB &=~ (1<<3); 
+     Delay800();
+	 ;;;;;;;;;
+
+     //发送8位数据位
+
+     while(n--)
+     {
+
+         tmp = (input&0x01);     //先传低位
+		 if(tmp)
+		 	PORTB |= (1<<3); 
+		 else
+		 	PORTB &=~ (1<<3); 
+         Delay800();
+
+         input=input>>1;
+
+     }
+
+     //发送校验位(无)
+		PORTB |= (1<<3); 
+        Delay800();
+
+}
+#endif
+
+
+#if Timer0  ///定时器
+
+
+//TIMER0 initialize - prescale:64
+// WGM: Normal
+// desired value: 50Hz
+// actual value: 50.134Hz (0.3%)
+void timer0_init(void)
+{
+     TCCR0B = 0x00; //stop
+     OCR0A = 0x1;
+     OCR0B = 0x1;
+     TCNT0 = 0x0; //set count
+     TCCR0A = 0x00; 
+     TCCR0B = 0x02; //start timer
+}
+
+#pragma interrupt_handler timer0_ovf_isr:4
+void timer0_ovf_isr(void)
+{
+     TCNT0 = 0x0; //reload counter value
+	 if(mark)
+	 {
+	    if(LEDStatus)
+		{
+		  LEDStatus  = 0;
+		  PORTB &=~ (1<<3);
+		}
+		else
+		{
+		  LEDStatus  = 1;
+		  PORTB |= (1<<3);	
+		}
+	 }
+}
+
+
+#endif
+
+
+//IO口初始化
+void port_init(void)
+{
+ 	DDRB = (1<<PB0)|(1<<PB1)|(1<<PB2)|(1<<PB3)|(0<<PB4);	//I/O状态
+	PORTB = 0x7;
+
+}
+#if ADCEN
+//ADC转始化设置
+void adc_init(void)
+{
+     ADCSRA = 0x00;  //disable adc
+     ADCMUX = 0x42;  //使用VCC作为参考电压，选择ADC3（PB3）输入通道
+     ACSR  = 0x80;   //禁用模拟比较器，降低功耗
+     ADCSRB = 0x00;  //ADC连续转换模式
+     ADCSRA = 0xEA;  //使能ADC开始转换，自动触发使能,使能转换结束中断,4分频
+}
+
+//ADC转换结束中断
+#pragma interrupt_handler adc_isr:10
+void adc_isr(void)
+{
+
+     uint value;
+     value=ADCL;          
+     value|=(uint)ADCH << 8; 
+	 LASTADCVAL=value;
+}
+#endif
+//call this routine to initialize all peripherals
+void init_devices(void)
+{
+    //stop errant interrupts until set up
+    CLI(); //disable all interrupts
+    port_init();
+#if  ADCEN
+    adc_init();
+#endif
+#if Timer0
+	 timer0_init();
+#endif
+    MCUCR = 0x00;
+#if Timer0
+	
+	TIMSK0 = 0x02; //timer interrupt sources
+#else
+    TIMSK0 = 0x00; //timer interrupt sources
+#endif
+    GIMSK = 0x00; //interrupt sources
+    SEI(); //re-enable interrupts
+    //all peripherals are now initialized
+}
+
+
+void main(void)
+{
+ 	 uchar i,cnt;
+ 	uint tmpADC,avgADC,ADCsum; 
+    init_devices();
+	delay_us(200);
+    while(1)
+    {
+		   ADCsum = 0;
+	 	   for(i = 0; i < 50; i++)
+		   {
+	 	    tmpADC = LASTADCVAL;
+		     ADCsum += tmpADC;
+			 delay_us(60);//6ms
+		  	}		
+			avgADC = (uint)(ADCsum/50);
+			
+			//avgADC = 500;
+			//mark = 1;
+			
+#if 1 
+
+			if(avgADC > Max)
+			{
+			   LEDStatus = 0;
+			  	mark = 0; 
+				PORTB &=~ (1<<3); 
+			}
+			if(avgADC < Min)
+			    mark = 1;
+									 
+#endif	
+
+
+
+   	  }
+	
+	   	 
+}

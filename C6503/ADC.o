@@ -1,0 +1,142 @@
+XL
+H 4 areas 7 global symbols
+M ADC.c
+S div32u Ref0000
+A text size FA flags 0
+dbfile ADC.c
+dbfile C:\Users\Administrator\Desktop\AVR\C6503灯板单片机源码无PWM波控制\ADC.c
+dbfunc e delay_us 0 fV
+dbsym r time 10 i
+dbline FFFFFFFF 0
+dbline C 0
+dbline E 0
+dbline F 0
+dbline 10 4
+dbline 11 4
+dbline FFFFFFFE E
+dbline 0 E
+dbfunc e port_init 10 fV
+dbline FFFFFFFF 10
+dbline 17 10
+dbline 18 10
+dbline 19 14
+dbline FFFFFFFE 18
+dbline 0 18
+dbfunc e adc_init 1A fV
+dbline FFFFFFFF 1A
+dbline 20 1A
+dbline 21 1A
+dbline 22 1E
+dbline 23 22
+dbline 24 26
+dbline 25 28
+dbline FFFFFFFE 2C
+dbline 0 2C
+dbfunc e adc_isr 2E fV
+dbsym r value 10 i
+dbline FFFFFFFF 3A
+dbline 2B 3A
+dbline 2E 3A
+dbline 2F 3E
+dbline 30 4A
+dbline FFFFFFFE 52
+dbline 0 52
+dbfunc e init_devices 60 fV
+dbline FFFFFFFF 60
+dbline 35 60
+dbline 37 60
+dbline 38 62
+dbline 39 64
+dbline 3A 66
+dbline 3B 6A
+dbline 3C 6C
+dbline 3D 6E
+dbline FFFFFFFE 70
+dbline 0 70
+dbfunc e main 72 fV
+dbsym l cnt 1 c
+dbsym r avgADC A i
+dbsym l ADCsum 0 l
+dbsym r tmpADC C i
+dbsym r i A c
+dbline FFFFFFFF 74
+dbline 43 74
+dbline 48 74
+dbline 49 76
+dbline 4D 7E
+dbline 4E 7E
+dbline 4F 88
+dbline 50 8C
+dbline 51 8C
+dbline 52 94
+dbline 53 B2
+dbline 54 B8
+dbline 4F B8
+dbline 4F BA
+dbline 55 C0
+dbline 56 DC
+dbline 57 E6
+dbline 59 E8
+dbline 5A F2
+dbline 5C F4
+dbline 4C F4
+dbline FFFFFFFE F6
+dbline 0 F6
+S _main Def0072
+S _adc_isr Def002E
+S _port_init Def0010
+S _init_devices Def0060
+S _adc_init Def001A
+S _delay_us Def0000
+A data size 2 flags 20
+dbfile ADC.c
+dbfile C:\Users\Administrator\Desktop\AVR\C6503灯板单片机源码无PWM波控制\ADC.c
+dbsym s LASTADCVAL 0 i
+A idata size 2 flags 0
+A vector size 14 flags C
+T 00 00 00 00
+R 00 00 02 00
+T 00 00 01 50 10 40 81 E0 90 E0 80 17 91 07 C8 F3
+R 00 00 00 00
+T 0E 00 08 95
+R 00 00 00 00
+T 10 00 87 E0 88 BB 8F E0 87 BB 08 95
+R 00 00 00 00
+T 1A 00 22 24 26 B8 82 E4 87 B9 80 E8 88 B9 23 B8
+R 00 00 00 00
+T 28 00 8A EE 86 B9 08 95
+R 00 00 00 00
+T 12 00 17 C0
+R 00 00 03 00 80 02 00 00
+T 2E 00 2A 92 3A 92 0A 93 1A 93 2F B6 2A 92 04 B1
+R 00 00 00 00
+T 3C 00 11 27 25 B0 33 24 32 2C 22 24 02 29 13 29
+R 00 00 00 00
+T 4A 00 10 93 01 00 00 93 00 00 29 90 2F BE 19 91
+R 00 00 00 00 00 04 01 00 00 08 01 00
+T 58 00 09 91 39 90 29 90 18 95
+R 00 00 00 00
+T 60 00 F8 94 D6 DF DA DF 22 24 25 BE 29 BE 2B BE
+R 00 00 00 00
+T 6E 00 78 94 08 95
+R 00 00 00 00
+T 72 00 24 97 F5 DF 08 EC 10 E0 C2 DF 3B C0 80 E0
+R 00 00 00 00
+T 80 00 88 83 89 83 8A 83 8B 83 AA 24 17 C0 C0 90
+R 00 00 00 00
+T 8E 00 00 00 D0 90 01 00 16 01 44 24 55 24 68 80
+R 00 00 00 00 00 02 01 00 00 06 01 00
+T 9C 00 79 80 8A 80 9B 80 62 0C 73 1C 84 1C 95 1C
+R 00 00 00 00
+T AA 00 68 82 79 82 8A 82 9B 82 04 E6 10 E0 A4 DF
+R 00 00 00 00
+T B8 00 A3 94 8A 2D 88 3C 30 F3 48 EC 50 E0 60 E0
+R 00 00 00 00
+T C6 00 70 E0 08 81 19 81 2A 81 3B 81 7A 93 6A 93
+R 00 00 00 00
+T D4 00 5A 93 4A 93 00 D0 58 01 8D E2 90 E0 80 17
+R 00 00 00 00 82 06 00 00
+T E2 00 91 07 08 F4 C3 98 C5 01 84 31 E0 E0 9E 07
+R 00 00 00 00
+T F0 00 08 F4 C3 9A C4 CF 24 96 08 95
+R 00 00 00 00

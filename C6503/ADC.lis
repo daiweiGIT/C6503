@@ -1,0 +1,356 @@
+                        .module ADC.c
+                        .area text(rom, con, rel)
+ 0000                   .dbfile ADC.c
+                        .area data(ram, con, rel)
+ 0000                   .dbfile ADC.c
+ 0000           _LASTADCVAL:
+ 0000                   .blkb 2
+                        .area idata
+ 0000 0000              .word 0
+                        .area data(ram, con, rel)
+ 0002                   .dbfile ADC.c
+ 0002                   .dbfile C:\Users\Administrator\Desktop\AVR\C6503灯板单片机源码无PWM波控制\ADC.c
+ 0002                   .dbsym s LASTADCVAL _LASTADCVAL i
+                        .area text(rom, con, rel)
+ 0000                   .dbfile C:\Users\Administrator\Desktop\AVR\C6503灯板单片机源码无PWM波控制\ADC.c
+ 0000                   .dbfunc e delay_us _delay_us fV
+ 0000           ;           time -> R16,R17
+                        .even
+ 0000           _delay_us::
+ 0000                   .dbline -1
+ 0000                   .dbline 12
+ 0000           ; #include <iot13v.h>
+ 0000           ; #include <macros.h>
+ 0000           ; #define uchar  unsigned char 
+ 0000           ; #define uint  unsigned int 
+ 0000           ; #define Min 20 ///光起控最小值
+ 0000           ; #define Max 45 ///光起控最大值
+ 0000           ; static uint volatile LASTADCVAL = 0;
+ 0000           ; 
+ 0000           ; #define ADCEN  1
+ 0000           ; /*微秒级延时程序*/
+ 0000           ; void delay_us(uint time)
+ 0000           ; {     
+ 0000           L2:
+ 0000                   .dbline 14
+ 0000           ;        do
+ 0000           ;        {
+ 0000                   .dbline 15
+ 0000           ;               time--;
+ 0000 0150              subi R16,1
+ 0002 1040              sbci R17,0
+ 0004                   .dbline 16
+ 0004           ;        }      
+ 0004           L3:
+ 0004                   .dbline 17
+ 0004           ;        while (time>1);
+ 0004 81E0              ldi R24,1
+ 0006 90E0              ldi R25,0
+ 0008 8017              cp R24,R16
+ 000A 9107              cpc R25,R17
+ 000C C8F3              brlo L2
+ 000E           X0:
+ 000E                   .dbline -2
+ 000E           L1:
+ 000E                   .dbline 0 ; func end
+ 000E 0895              ret
+ 0010                   .dbsym r time 16 i
+ 0010                   .dbend
+ 0010                   .dbfunc e port_init _port_init fV
+                        .even
+ 0010           _port_init::
+ 0010                   .dbline -1
+ 0010                   .dbline 23
+ 0010           ; }       
+ 0010           ; 
+ 0010           ; 
+ 0010           ; //IO口初始化
+ 0010           ; void port_init(void)
+ 0010           ; {
+ 0010                   .dbline 24
+ 0010           ;       PORTB = 0x07;
+ 0010 87E0              ldi R24,7
+ 0012 88BB              out 0x18,R24
+ 0014                   .dbline 25
+ 0014           ;       DDRB = (1<<PB0)|(1<<PB1)|(1<<PB2)|(1<<PB3)|(0<<PB4);    //I/O状态
+ 0014 8FE0              ldi R24,15
+ 0016 87BB              out 0x17,R24
+ 0018                   .dbline -2
+ 0018           L5:
+ 0018                   .dbline 0 ; func end
+ 0018 0895              ret
+ 001A                   .dbend
+ 001A                   .dbfunc e adc_init _adc_init fV
+                        .even
+ 001A           _adc_init::
+ 001A                   .dbline -1
+ 001A                   .dbline 32
+ 001A           ; 
+ 001A           ; 
+ 001A           ; }
+ 001A           ; 
+ 001A           ; //ADC转始化设置
+ 001A           ; void adc_init(void)
+ 001A           ; {
+ 001A                   .dbline 33
+ 001A           ;      ADCSRA = 0x00;  //disable adc
+ 001A 2224              clr R2
+ 001C 26B8              out 0x6,R2
+ 001E                   .dbline 34
+ 001E           ;      ADCMUX = 0x42;  //使用VCC作为参考电压，选择ADC3（PB3）输入通道
+ 001E 82E4              ldi R24,66
+ 0020 87B9              out 0x7,R24
+ 0022                   .dbline 35
+ 0022           ;      ACSR  = 0x80;   //禁用模拟比较器，降低功耗
+ 0022 80E8              ldi R24,128
+ 0024 88B9              out 0x8,R24
+ 0026                   .dbline 36
+ 0026           ;      ADCSRB = 0x00;  //ADC连续转换模式
+ 0026 23B8              out 0x3,R2
+ 0028                   .dbline 37
+ 0028           ;      ADCSRA = 0xEA;  //使能ADC开始转换，自动触发使能,使能转换结束中断,4分频
+ 0028 8AEE              ldi R24,234
+ 002A 86B9              out 0x6,R24
+ 002C                   .dbline -2
+ 002C           L6:
+ 002C                   .dbline 0 ; func end
+ 002C 0895              ret
+ 002E                   .dbend
+                        .area vector(rom, abs)
+                        .org 18
+ 0012 17C0              rjmp _adc_isr
+                        .area text(rom, con, rel)
+ 002E                   .dbfile C:\Users\Administrator\Desktop\AVR\C6503灯板单片机源码无PWM波控制\ADC.c
+ 002E                   .dbfunc e adc_isr _adc_isr fV
+ 002E           ;          value -> R16,R17
+                        .even
+ 002E           _adc_isr::
+ 002E 2A92              st -y,R2
+ 0030 3A92              st -y,R3
+ 0032 0A93              st -y,R16
+ 0034 1A93              st -y,R17
+ 0036 2FB6              IN R2,63
+ 0038 2A92              st -y,R2
+ 003A                   .dbline -1
+ 003A                   .dbline 43
+ 003A           ; }
+ 003A           ; 
+ 003A           ; //ADC转换结束中断
+ 003A           ; #pragma interrupt_handler adc_isr:10
+ 003A           ; void adc_isr(void)
+ 003A           ; {
+ 003A                   .dbline 46
+ 003A           ; 
+ 003A           ;      uint value;
+ 003A           ;      value=ADCL;          
+ 003A 04B1              in R16,0x4
+ 003C 1127              clr R17
+ 003E                   .dbline 47
+ 003E           ;      value|=(uint)ADCH << 8; 
+ 003E 25B0              in R2,0x5
+ 0040 3324              clr R3
+ 0042 322C              mov R3,R2
+ 0044 2224              clr R2
+ 0046 0229              or R16,R2
+ 0048 1329              or R17,R3
+ 004A                   .dbline 48
+ 004A           ;        LASTADCVAL=value;
+ 004A 10930100          sts _LASTADCVAL+1,R17
+ 004E 00930000          sts _LASTADCVAL,R16
+ 0052                   .dbline -2
+ 0052           L7:
+ 0052                   .dbline 0 ; func end
+ 0052 2990              ld R2,y+
+ 0054 2FBE              OUT 63,R2
+ 0056 1991              ld R17,y+
+ 0058 0991              ld R16,y+
+ 005A 3990              ld R3,y+
+ 005C 2990              ld R2,y+
+ 005E 1895              reti
+ 0060                   .dbsym r value 16 i
+ 0060                   .dbend
+ 0060                   .dbfunc e init_devices _init_devices fV
+                        .even
+ 0060           _init_devices::
+ 0060                   .dbline -1
+ 0060                   .dbline 53
+ 0060           ; }
+ 0060           ; 
+ 0060           ; //call this routine to initialize all peripherals
+ 0060           ; void init_devices(void)
+ 0060           ; {
+ 0060                   .dbline 55
+ 0060           ;     //stop errant interrupts until set up
+ 0060           ;     CLI(); //disable all interrupts
+ 0060 F894              cli
+ 0062                   .dbline 56
+ 0062           ;     port_init();
+ 0062 D6DF              rcall _port_init
+ 0064                   .dbline 57
+ 0064           ;     adc_init();
+ 0064 DADF              rcall _adc_init
+ 0066                   .dbline 58
+ 0066           ;     MCUCR = 0x00;
+ 0066 2224              clr R2
+ 0068 25BE              out 0x35,R2
+ 006A                   .dbline 59
+ 006A           ;     TIMSK0 = 0x00; //timer interrupt sources
+ 006A 29BE              out 0x39,R2
+ 006C                   .dbline 60
+ 006C           ;     GIMSK = 0x00; //interrupt sources
+ 006C 2BBE              out 0x3b,R2
+ 006E                   .dbline 61
+ 006E           ;     SEI(); //re-enable interrupts
+ 006E 7894              sei
+ 0070                   .dbline -2
+ 0070           L8:
+ 0070                   .dbline 0 ; func end
+ 0070 0895              ret
+ 0072                   .dbend
+ 0072                   .dbfunc e main _main fV
+ 0072           ;            cnt -> <dead>
+ 0072           ;         avgADC -> R10,R11
+ 0072           ;         ADCsum -> y+0
+ 0072           ;         tmpADC -> R12,R13
+ 0072           ;              i -> R10
+                        .even
+ 0072           _main::
+ 0072 2497              sbiw R28,4
+ 0074                   .dbline -1
+ 0074                   .dbline 67
+ 0074           ;     //all peripherals are now initialized
+ 0074           ; }
+ 0074           ; 
+ 0074           ; 
+ 0074           ; void main(void)
+ 0074           ; {
+ 0074                   .dbline 72
+ 0074           ;        uchar i,cnt;
+ 0074           ;       uint tmpADC,avgADC; 
+ 0074           ;       unsigned long ADCsum;
+ 0074           ;       
+ 0074           ;     init_devices();
+ 0074 F5DF              rcall _init_devices
+ 0076                   .dbline 73
+ 0076           ;       delay_us(200);
+ 0076 08EC              ldi R16,200
+ 0078 10E0              ldi R17,0
+ 007A C2DF              rcall _delay_us
+ 007C 3BC0              rjmp L11
+ 007E           L10:
+ 007E                   .dbline 77
+ 007E           ; 
+ 007E           ;     
+ 007E           ;     while(1)
+ 007E           ;     {
+ 007E                   .dbline 78
+ 007E           ;                  ADCsum = 0;
+ 007E 80E0              ldi R24,0
+ 0080 8883              std y+0,R24
+ 0082 8983              std y+1,R24
+ 0084 8A83              std y+2,R24
+ 0086 8B83              std y+3,R24
+ 0088                   .dbline 79
+ 0088           ;                  for(i = 0; i < 200; i++)
+ 0088 AA24              clr R10
+ 008A 17C0              rjmp L16
+ 008C           L13:
+ 008C                   .dbline 80
+ 008C           ;                  {
+ 008C                   .dbline 81
+ 008C           ;                   tmpADC = LASTADCVAL;
+ 008C C0900000          lds R12,_LASTADCVAL
+ 0090 D0900100          lds R13,_LASTADCVAL+1
+ 0094                   .dbline 82
+ 0094           ;                    ADCsum += tmpADC;
+ 0094 1601              movw R2,R12
+ 0096 4424              clr R4
+ 0098 5524              clr R5
+ 009A 6880              ldd R6,y+0
+ 009C 7980              ldd R7,y+1
+ 009E 8A80              ldd R8,y+2
+ 00A0 9B80              ldd R9,y+3
+ 00A2 620C              add R6,R2
+ 00A4 731C              adc R7,R3
+ 00A6 841C              adc R8,R4
+ 00A8 951C              adc R9,R5
+ 00AA 6882              std y+0,R6
+ 00AC 7982              std y+1,R7
+ 00AE 8A82              std y+2,R8
+ 00B0 9B82              std y+3,R9
+ 00B2                   .dbline 83
+ 00B2           ;                        delay_us(100);//6ms
+ 00B2 04E6              ldi R16,100
+ 00B4 10E0              ldi R17,0
+ 00B6 A4DF              rcall _delay_us
+ 00B8                   .dbline 84
+ 00B8           ;                       }               
+ 00B8           L14:
+ 00B8                   .dbline 79
+ 00B8 A394              inc R10
+ 00BA           L16:
+ 00BA                   .dbline 79
+ 00BA 8A2D              mov R24,R10
+ 00BC 883C              cpi R24,200
+ 00BE 30F3              brlo L13
+ 00C0           X1:
+ 00C0                   .dbline 85
+ 00C0           ;                       avgADC = (uint)(ADCsum/200);
+ 00C0 48EC              ldi R20,200
+ 00C2 50E0              ldi R21,0
+ 00C4 60E0              ldi R22,0
+ 00C6 70E0              ldi R23,0
+ 00C8 0881              ldd R16,y+0
+ 00CA 1981              ldd R17,y+1
+ 00CC 2A81              ldd R18,y+2
+ 00CE 3B81              ldd R19,y+3
+ 00D0 7A93              st -y,R23
+ 00D2 6A93              st -y,R22
+ 00D4 5A93              st -y,R21
+ 00D6 4A93              st -y,R20
+ 00D8 00D0              rcall div32u
+ 00DA 5801              movw R10,R16
+ 00DC                   .dbline 86
+ 00DC           ;                       if(avgADC > Max)
+ 00DC 8DE2              ldi R24,45
+ 00DE 90E0              ldi R25,0
+ 00E0 8017              cp R24,R16
+ 00E2 9107              cpc R25,R17
+ 00E4 08F4              brsh L17
+ 00E6           X2:
+ 00E6                   .dbline 87
+ 00E6           ;                               PORTB &=~ (1<<3); 
+ 00E6 C398              cbi 0x18,3
+ 00E8           L17:
+ 00E8                   .dbline 89
+ 00E8           ; 
+ 00E8           ;                       if(avgADC < Min)
+ 00E8 C501              movw R24,R10
+ 00EA 8431              cpi R24,20
+ 00EC E0E0              ldi R30,0
+ 00EE 9E07              cpc R25,R30
+ 00F0 08F4              brsh L19
+ 00F2           X3:
+ 00F2                   .dbline 90
+ 00F2           ;                           PORTB |= (1<<3); 
+ 00F2 C39A              sbi 0x18,3
+ 00F4           L19:
+ 00F4                   .dbline 92
+ 00F4           ; 
+ 00F4           ;         }      
+ 00F4           L11:
+ 00F4                   .dbline 76
+ 00F4 C4CF              rjmp L10
+ 00F6           X4:
+ 00F6                   .dbline -2
+ 00F6           L9:
+ 00F6                   .dbline 0 ; func end
+ 00F6 2496              adiw R28,4
+ 00F8 0895              ret
+ 00FA                   .dbsym l cnt 1 c
+ 00FA                   .dbsym r avgADC 10 i
+ 00FA                   .dbsym l ADCsum 0 l
+ 00FA                   .dbsym r tmpADC 12 i
+ 00FA                   .dbsym r i 10 c
+ 00FA                   .dbend
+ 00FA           ; }
